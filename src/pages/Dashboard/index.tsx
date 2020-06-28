@@ -61,14 +61,18 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     async function loadFoods(): Promise<void> {
       try {
-        const response = await api.get('foods', {
+        const response = await api.get<Food[]>('foods', {
           params: {
             category_like: selectedCategory,
             name_like: searchValue,
           },
         });
 
-        setFoods(response.data);
+        const foodList = response.data.map(food => {
+          return { ...food, formattedPrice: formatValue(food.price) } as Food;
+        });
+
+        setFoods(foodList);
       } catch (error) {
         console.log(error);
         Alert.alert('Ocorreu um erro ao carregar os pratos', ':(');

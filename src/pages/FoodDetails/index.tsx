@@ -77,6 +77,10 @@ const FoodDetails: React.FC = () => {
         const response = await api.get<Food>(`foods/${routeParams.id}`);
         setFood(response.data);
         setExtras(response.data.extras);
+        api
+          .get(`favorites/${response.data.id}`)
+          .then(() => setIsFavorite(true))
+          .catch(() => setIsFavorite(false));
       } catch (error) {
         console.log(error);
         Alert.alert('Ocorreu um erro ao carregar o prato.', ':(');
@@ -124,7 +128,14 @@ const FoodDetails: React.FC = () => {
 
   const toggleFavorite = useCallback(() => {
     // Toggle if food is favorite or not
-    setIsFavorite(state => !state);
+    if (isFavorite) {
+      api.delete(`favorites/${food.id}`).then(() => setIsFavorite(false));
+    } else {
+      api
+        .post('favorites', food)
+        .then(() => setIsFavorite(true))
+        .catch(error => console.log(error));
+    }
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
@@ -139,6 +150,12 @@ const FoodDetails: React.FC = () => {
 
   async function handleFinishOrder(): Promise<void> {
     // Finish the order and save on the API
+    Object.assign(food, { extras });
+    try {
+      await api.post('orders', food);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   // Calculate the correct icon name
